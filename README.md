@@ -80,9 +80,9 @@ clawx-rust/
 MIT
 
 ## Acknowledgments
-OpenClaw – The AI agent runtime |
-Clawx - A desktop app that provides a graphical interface for OpenClaw AI agents |
-Tauri – Native cross-platform desktop framework |
-React – UI component library |
-shadcn/ui – Beautifully designed components |
-Zustand – Lightweight state management
+- OpenClaw – The AI agent runtime
+- Clawx - A desktop app that provides a graphical interface for OpenClaw AI agents
+- Tauri – Native cross-platform desktop framework
+- React – UI component library
+- shadcn/ui – Beautifully designed components
+- Zustand – Lightweight state management
