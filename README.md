@@ -1,6 +1,6 @@
 # ClawX-Rust
 
-Desktop interface for OpenClaw AI Agents - Rust implementation using Tauri
+A case modified from clawx, a desktop interface for OpenClaw AI Agents - Rust implementation using Tauri
 
 ## Features
 
