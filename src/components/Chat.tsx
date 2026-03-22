@@ -14,7 +14,7 @@ export function Chat() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { messages, currentChannelId, addMessage, setMessages } = useAppStore();
+  const { messages, currentChannelId, addMessage } = useAppStore();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -43,13 +43,7 @@ export function Chat() {
       });
 
       if (result.success && result.data) {
-        const assistantMessage: Message = {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: "This is a demo response. Gateway integration coming soon.",
-          timestamp: Date.now(),
-        };
-        addMessage(assistantMessage);
+        addMessage(result.data);
       }
     } catch (error) {
       console.error("Failed to send message:", error);

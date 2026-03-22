@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { MessageCircle, Settings, Puzzle, Calendar, Radio, Bot } from "lucide-react";
+import { MessageCircle, Settings, Puzzle, Calendar, Radio, Bot, Cpu } from "lucide-react";
 import { Chat } from "./components/Chat";
 import { Channels } from "./components/Channels";
 import { Skills } from "./components/Skills";
 import { Settings as SettingsPage } from "./components/Settings";
 import { Cron } from "./components/Cron";
+import { Models } from "./components/Models";
 
-type Page = "chat" | "channels" | "skills" | "cron" | "settings";
+type Page = "chat" | "channels" | "skills" | "cron" | "settings" | "models";
 
 interface CommandResult<T> {
   success: boolean;
@@ -15,32 +16,22 @@ interface CommandResult<T> {
   error: string | null;
 }
 
-interface AppInfo {
-  name: string;
-  version: string;
-}
-
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>("chat");
-  const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
   const [gatewayRunning, setGatewayRunning] = useState(false);
 
-  useState(() => {
-    invoke<CommandResult<AppInfo>>("get_app_info").then((result) => {
-      if (result.success && result.data) {
-        setAppInfo(result.data);
-      }
-    });
+  useEffect(() => {
     invoke<CommandResult<boolean>>("check_gateway_status").then((result) => {
       if (result.success) {
         setGatewayRunning(result.data ?? false);
       }
     });
-  });
+  }, []);
 
   const navItems = [
     { id: "chat" as Page, icon: MessageCircle, label: "Chat" },
     { id: "channels" as Page, icon: Radio, label: "Channels" },
+    { id: "models" as Page, icon: Cpu, label: "Models" },
     { id: "skills" as Page, icon: Puzzle, label: "Skills" },
     { id: "cron" as Page, icon: Calendar, label: "Automation" },
     { id: "settings" as Page, icon: Settings, label: "Settings" },
@@ -52,6 +43,8 @@ function App() {
         return <Chat />;
       case "channels":
         return <Channels />;
+      case "models":
+        return <Models />;
       case "skills":
         return <Skills />;
       case "cron":

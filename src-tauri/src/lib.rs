@@ -36,10 +36,19 @@ pub fn run() {
             commands::list_channels,
             commands::add_channel,
             commands::remove_channel,
+            commands::connect_channel,
+            commands::toggle_channel,
             commands::list_skills,
             commands::install_skill,
             commands::get_settings,
             commands::save_settings,
+            commands::restart_gateway,
+            commands::list_crons,
+            commands::add_cron,
+            commands::remove_cron,
+            commands::toggle_cron,
+            commands::get_model_config,
+            commands::save_model_config,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

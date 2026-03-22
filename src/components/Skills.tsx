@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Puzzle, Download, Check, ToggleLeft, ToggleRight } from "lucide-react";
+import { Puzzle, Download, Check, ToggleLeft, ToggleRight, RefreshCw } from "lucide-react";
 import { cn } from "../lib/utils";
-import { useAppStore, Skill } from "../stores/appStore";
 
 interface CommandResult<T> {
   success: boolean;
@@ -10,9 +9,17 @@ interface CommandResult<T> {
   error: string | null;
 }
 
+interface Skill {
+  name: string;
+  description: string;
+  enabled: boolean;
+  installed: boolean;
+}
+
 export function Skills() {
-  const { skills, setSkills } = useAppStore();
+  const [skills, setSkills] = useState<Skill[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInstalling, setIsInstalling] = useState<string | null>(null);
 
   useEffect(() => {
     loadSkills();
@@ -33,29 +40,35 @@ export function Skills() {
   };
 
   const handleInstallSkill = async (skillName: string) => {
+    setIsInstalling(skillName);
     try {
-      const result = await invoke<CommandResult<Skill>>("install_skill", {
-        skillName,
-      });
+      const result = await invoke<CommandResult<Skill>>("install_skill", { skillName });
       if (result.success && result.data) {
-        const existing = skills.find((s) => s.name === skillName);
-        if (existing) {
-          setSkills(
-            skills.map((s) => (s.name === skillName ? result.data! : s))
-          );
-        } else {
-          setSkills([...skills, result.data!]);
-        }
+        setSkills(prev => {
+          const existing = prev.find(s => s.name === skillName);
+          if (existing) {
+            return prev.map(s => s.name === skillName ? result.data! : s);
+          }
+          return [...prev, result.data!];
+        });
       }
     } catch (error) {
       console.error("Failed to install skill:", error);
+    } finally {
+      setIsInstalling(null);
     }
+  };
+
+  const handleToggleSkill = async (skillName: string) => {
+    setSkills(prev => prev.map(s => 
+      s.name === skillName ? { ...s, enabled: !s.enabled } : s
+    ));
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <Puzzle className="w-8 h-8 animate-spin text-muted-foreground" />
+        <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -84,9 +97,14 @@ export function Skills() {
               ) : (
                 <button
                   onClick={() => handleInstallSkill(skill.name)}
+                  disabled={isInstalling === skill.name}
                   className="p-1 hover:bg-muted rounded"
                 >
-                  <Download className="w-4 h-4" />
+                  {isInstalling === skill.name ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
                 </button>
               )}
             </div>
@@ -105,9 +123,12 @@ export function Skills() {
               >
                 {skill.installed ? "Installed" : "Not installed"}
               </span>
-              <button className="text-muted-foreground hover:text-foreground">
+              <button 
+                onClick={() => handleToggleSkill(skill.name)}
+                className="text-muted-foreground hover:text-foreground"
+              >
                 {skill.enabled ? (
-                  <ToggleRight className="w-5 h-5" />
+                  <ToggleRight className="w-5 h-5 text-green-500" />
                 ) : (
                   <ToggleLeft className="w-5 h-5" />
                 )}

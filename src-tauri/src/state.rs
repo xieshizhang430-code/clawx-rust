@@ -1,12 +1,14 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Mutex;
+use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Channel {
     pub id: String,
     pub name: String,
-    pub provider: String,
+    #[serde(rename = "type")]
+    pub channel_type: String,
     pub enabled: bool,
 }
 
@@ -22,8 +24,10 @@ pub struct Skill {
 pub struct Settings {
     pub language: String,
     pub theme: String,
+    #[serde(default)]
     pub auto_start: bool,
     pub proxy: Option<ProxySettings>,
+    #[serde(default)]
     pub providers: HashMap<String, ProviderConfig>,
 }
 
@@ -50,25 +54,31 @@ pub struct Message {
     pub timestamp: i64,
 }
 
+struct CacheEntry<T> {
+    value: T,
+    timestamp: Instant,
+}
+
+const CACHE_TTL: Duration = Duration::from_secs(30);
+
 pub struct AppState {
     pub channels: Mutex<Vec<Channel>>,
     pub skills: Mutex<Vec<Skill>>,
     pub settings: Mutex<Settings>,
     pub messages: Mutex<HashMap<String, Vec<Message>>>,
     pub gateway_running: Mutex<bool>,
+    pub cache: Mutex<HashMap<String, CacheEntry<serde_json::Value>>>,
 }
 
 impl AppState {
     pub fn new() -> Self {
         Self {
-            channels: Mutex::new(vec![
-                Channel {
-                    id: "default".to_string(),
-                    name: "Default".to_string(),
-                    provider: "openai".to_string(),
-                    enabled: true,
-                },
-            ]),
+            channels: Mutex::new(vec![Channel {
+                id: "default".to_string(),
+                name: "Default".to_string(),
+                channel_type: "openai".to_string(),
+                enabled: true,
+            }]),
             skills: Mutex::new(vec![
                 Skill {
                     name: "xlsx".to_string(),
@@ -98,6 +108,34 @@ impl AppState {
             }),
             messages: Mutex::new(HashMap::new()),
             gateway_running: Mutex::new(false),
+            cache: Mutex::new(HashMap::new()),
         }
+    }
+
+    pub fn get_cached(&self, key: &str) -> Option<serde_json::Value> {
+        let cache = self.cache.lock().unwrap();
+        cache.get(key).and_then(|entry| {
+            if entry.timestamp.elapsed() < CACHE_TTL {
+                Some(entry.value.clone())
+            } else {
+                None
+            }
+        })
+    }
+
+    pub fn set_cached(&self, key: &str, value: serde_json::Value) {
+        let mut cache = self.cache.lock().unwrap();
+        cache.insert(
+            key.to_string(),
+            CacheEntry {
+                value,
+                timestamp: Instant::now(),
+            },
+        );
+    }
+
+    pub fn invalidate_cache(&self, key: &str) {
+        let mut cache = self.cache.lock().unwrap();
+        cache.remove(key);
     }
 }

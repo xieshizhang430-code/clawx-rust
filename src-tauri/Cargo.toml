@@ -28,6 +28,8 @@ thiserror = "2"
 chrono = { version = "0.4", features = ["serde"] }
 dirs = "6"
 uuid = { version = "1", features = ["v4", "serde"] }
+futures-util = "0.3"
+url = "2"
 
 [profile.release]
 strip = true

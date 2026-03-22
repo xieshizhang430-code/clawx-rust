@@ -10,8 +10,10 @@ export interface Message {
 export interface Channel {
   id: string;
   name: string;
-  provider: string;
+  type: "telegram" | "whatsapp" | "slack" | "discord" | "signal" | "msteams" | "matrix" | "feishu" | "line" | "webchat";
   enabled: boolean;
+  config?: { [key: string]: string };
+  status?: "connected" | "disconnected" | "error";
 }
 
 export interface Skill {
